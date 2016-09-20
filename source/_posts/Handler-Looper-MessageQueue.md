@@ -184,7 +184,7 @@ public static Message obtain() {
     return new Message(); // 栈池空，new一个
 }
 ```
-池为空的清空下连续回收msg1，msg2
+池为空的情况下连续回收msg1，msg2
 ![](pic01.jpg)
 
 连续obtain两个Message
