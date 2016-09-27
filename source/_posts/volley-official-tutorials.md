@@ -14,14 +14,15 @@ Volley是一个HTTP库，它使得Android应用程序的网络访问变得更加
 Volley包含在Android源码之中，具体路径为：android源码/frameworks/volley
 
 Volley有以下优点：
+
 - 自动调度网络请求
 - 多并发网络连接
 - 具有标准缓存一致性的，透明的，内存、硬盘响应缓存
 - 支持请求优先级
-- 取消请求接口。你可以单独取消一个请求，你也可以通过划定范围取消多个请求。
-- 方便定制。比如说：重试和退避请求。
-- 强大的排序功能，使得你能够很容易的使用从网络异步获取的数据填充你的UI。
-- 调试与追踪工具。
+- 取消请求接口。你可以单独取消一个请求，你也可以通过划定范围取消多个请求
+- 方便定制。比如说：重试和退避请求
+- 强大的排序功能，使得你能够很容易的使用从网络异步获取的数据填充你的UI
+- 调试与追踪工具
 
 Volley尤其擅长用来填充UI的RPC调用操作，比如获取一组结构化的搜索结果。它很容易与其他协议集成，而且已经实现了常用的、原始的String，Image与Json协议请求。Volley提供了许多在日常开发中所需要的网络层的功能，避免我们去重复造轮子，专注于业务逻辑代码的实现。
 
@@ -83,7 +84,7 @@ Volley内部维护者一个缓存处理线程和一组网络调度线程。当�
 
 值得注意的一点是，重量级的操作，比如阻塞I/O、响应解码处理都是在工作线程上执行的。你可以在任意线程上添加`Request`，但响应总会被转送到主线程。
 
-![Request的一生](volley-request.png "Request的一生")
+![Request的一生](/2016/09/20/volley-official-tutorials/volley-request.png "Request的一生")
 
 ## 取消请求
 通过调用`Request`对象的`cancel()`方法，可以取消这一个`Request`。一旦一个`Request`被取消，那么它的响应监听将永远不会被调用。这就意味着，你可以在`Activity`的`onStop()`方法中取消所有还没有执行完的`Request`。这样的话，我们就不需要在`Request`的响应回调中判断是否`getActivity() == null`或者`onSaveInstanceState()`有没有已经被调用这些预防性的判断了，因为被取消后根本就不存在这种case了。
@@ -173,3 +174,114 @@ mRequestQueue.add(stringRequest);
 如果你的App要经常使用网络的话，那么让`RequestQueue`与你的App生命周期一样是最高效的解决办法。实现的方法多种多样，我们推荐实现一个单例类来封装`RequestQueue`以及Volley的其它功能。另外一个方法是，实现一个Application的子类，然后在`Application.onCreate()`方法中配置`RequestQueue`。第二种方法不推荐使用，因为这两中方法实现的功能一样，不过单例模式更能体现模块化的思想。
 
 请注意，在实例化`RequestQueue`的时候，使用ApplicationContext，不要使用Activity的Context
+
+
+
+# 自定义Request
+
+如果Volley自带的JsonRequest、StringRequest等不能满足我们的需求，那么我就需要自定义Request了。
+
+## 实现一个Request
+在toolbox中Volley已经帮我们实现好了常用的Request。如果你的请求响应是String、Json抑或Image的话，你大概不需要去实现Request。
+如果你真的需要实现一个自己的Request的话。你只需要做如下的事情：
+- 继承`Request<T>`类，这里泛型`<T>`是你期待的解析后的请求的响应类型。比如，如果你希望将响应解析为字符串的话，只需要继承`Request<String>`就可以了。这里你可以参考toolbox里面的`StringRequest`和`ImageRequest`，参考以下如何继承`Request<T>`.
+
+- 实现`parseNetworkResponse()`和`deliverResponse()`这两个抽象方法，下面详细介绍这两个方法。
+
+### parseNetworkResponse
+
+Volley用`Response<T>`封装`Request<T>`所指定类型(String、Json)的响应。如下是`parseNetworkResponse()`的一个实现示例：
+
+``` java
+@Override
+protected Response<T> parseNetworkResponse(
+        NetworkResponse response) {
+    try {
+        String json = new String(response.data,
+        HttpHeaderParser.parseCharset(response.headers));
+    return Response.success(gson.fromJson(json, clazz),
+    HttpHeaderParser.parseCacheHeaders(response));
+    }
+    // 错误处理
+...
+}
+```
+
+流程说明：
+
+- 方法`parseNetworkResponse()`的参数为`NetworkResponse`，其内容包括二进制格式的响应负载、HTTP状态码以及响应头。
+- 实现的方法必须的返回结果必须是`Response<T>`。如果解析成功返回结果中将包含指定类型的响应对象以及缓存的元数据，如果失败结果里就是失败的信息。
+
+如果你的协议中缓存的要求与标准缓存不同，你可以自定义自己的缓存实现。不过大多数请求都可以按照如下写法：
+
+``` java
+return Response.success(myDecodedObject,
+        HttpHeaderParser.parseCacheHeaders(response));
+```
+
+Volley只会在工作线程调用`parseNetworkResponse()`方法。这一点保证了诸如将JPEG图片解析为一个Bitmap对象这样的耗时操作不会阻塞UI线程。
+
+### deliverResponse
+
+Volley会将`parseNetworkResponse()`方法返回的对象转移到主线程调用。大多数请求都会在这里调用回调接口。示例：
+
+``` java
+protected void deliverResponse(T response) {
+        listener.onResponse(response);
+```
+
+## Example: GsonRequest
+
+Gson库使用反射技术，能够把Json字符串转换成Java对象，也可以反过来将Java对象转换成Json字符串。Java对象的属性与Json的key需要对应起来，Gson才能够进行填充。如下是使用Gson解析请求响应结果的完整实现示例：
+
+``` java
+public class GsonRequest<T> extends Request<T> {
+    private final Gson gson = new Gson();
+    private final Class<T> clazz;
+    private final Map<String, String> headers;
+    private final Listener<T> listener;
+
+    /**
+     * 构造一个GET请求，其返回结果是解析自JSON字符串的对象
+     *
+     * @param url 请求的URL
+     * @param clazz 解析JSON字符串后生成该类的对象
+     * @param headers Map of request headers
+     */
+    public GsonRequest(String url, Class<T> clazz, Map<String, String> headers,
+            Listener<T> listener, ErrorListener errorListener) {
+        super(Method.GET, url, errorListener);
+        this.clazz = clazz;
+        this.headers = headers;
+        this.listener = listener;
+    }
+
+    @Override
+    public Map<String, String> getHeaders() throws AuthFailureError {
+        return headers != null ? headers : super.getHeaders();
+    }
+
+    @Override
+    protected void deliverResponse(T response) {
+        listener.onResponse(response);
+    }
+
+    @Override
+    protected Response<T> parseNetworkResponse(NetworkResponse response) {
+        try {
+            String json = new String(
+                    response.data,
+                    HttpHeaderParser.parseCharset(response.headers));
+            return Response.success(
+                    gson.fromJson(json, clazz),
+                    HttpHeaderParser.parseCacheHeaders(response));
+        } catch (UnsupportedEncodingException e) {
+            return Response.error(new ParseError(e));
+        } catch (JsonSyntaxException e) {
+            return Response.error(new ParseError(e));
+        }
+    }
+}
+```
+
+Volley已经帮我们实现好了`JsonArrayRequest`和`JsonArrayObject`，可以方便使用。详情请参见[使用标准请求](使用标准请求)。
