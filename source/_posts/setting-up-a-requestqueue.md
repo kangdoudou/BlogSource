@@ -1,5 +1,5 @@
 ---
-title: 配置RequestQueue
+title: Volley官方教程翻译（三）：配置RequestQueue
 date: 2016-09-27 23:00:05
 tags: android volley
 ---
@@ -57,6 +57,76 @@ mRequestQueue.add(stringRequest);
 
 如果你的App要经常使用网络的话，那么让`RequestQueue`与你的App生命周期一样是最高效的解决办法。实现的方法多种多样，我们推荐实现一个单例类来封装`RequestQueue`以及Volley的其它功能。另外一个方法是，实现一个Application的子类，然后在`Application.onCreate()`方法中配置`RequestQueue`。第二种方法不推荐使用，因为这两中方法实现的功能一样，不过单例模式更能体现模块化的思想。
 
-请注意，在实例化`RequestQueue`的时候，使用ApplicationContext，不要使用Activity的Context
+请注意，在实例化`RequestQueue`的时候，使用ApplicationContext，不要使用Activity的Context。因为ApplicationContext的生命周期是整个App的生命周期。
+
+如下是提供了`RequestQueue`和`ImageLoad`功能的一个单例实现例子。
+
+``` java
+public class MySingleton {
+    private static MySingleton mInstance;
+    private RequestQueue mRequestQueue;
+    private ImageLoader mImageLoader;
+    private static Context mCtx;
+
+    private MySingleton(Context context) {
+        mCtx = context;
+        mRequestQueue = getRequestQueue();
+
+        mImageLoader = new ImageLoader(mRequestQueue,
+                new ImageLoader.ImageCache() {
+            private final LruCache<String, Bitmap>
+                    cache = new LruCache<String, Bitmap>(20);
+
+            @Override
+            public Bitmap getBitmap(String url) {
+                return cache.get(url);
+            }
+
+            @Override
+            public void putBitmap(String url, Bitmap bitmap) {
+                cache.put(url, bitmap);
+            }
+        });
+    }
+
+    public static synchronized MySingleton getInstance(Context context) {
+        if (mInstance == null) {
+            mInstance = new MySingleton(context);
+        }
+        return mInstance;
+    }
+
+    public RequestQueue getRequestQueue() {
+        if (mRequestQueue == null) {
+            // getApplicationContext() 这句代码是关键
+            // 因为mCtx可能不是ApplicationContext，结果就很可能泄露这个mCtx
+            mRequestQueue = Volley.newRequestQueue(mCtx.getApplicationContext());
+        }
+        return mRequestQueue;
+    }
+
+    public <T> void addToRequestQueue(Request<T> req) {
+        getRequestQueue().add(req);
+    }
+
+    public ImageLoader getImageLoader() {
+        return mImageLoader;
+    }
+}
+```
+
+如下是如何使用这个单例执行网络请求。
+
+``` java
+// 获得RequestQueue
+RequestQueue queue = MySingleton.getInstance(this.getApplicationContext()).
+    getRequestQueue();
+
+// ...
+
+// 往RequestQueue中添加一个Request
+MySingleton.getInstance(this).addToRequestQueue(stringRequest);
+```
+
 
 
