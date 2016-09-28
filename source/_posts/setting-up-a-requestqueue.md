@@ -1,14 +1,14 @@
 ---
 title: Volley官方教程翻译（三）：配置RequestQueue
 date: 2016-09-27 23:00:05
-tags: android volley
+tags: [android, volley]
 ---
 > 原文连接：https://developer.android.com/training/volley/requestqueue.html
 通过上节我们知道，使用`Volley.newRequestQueue`方法可以很方便的得到一个默认配置的`RequestQueue`。这节介绍如何一步步的配置一个满足用户需求的`RequestQueue`。
 
 此节中还推荐`RequestQueue`以单例的方式提供服务，这样整个App的生命周期内都可以使用Volley提供的网络请求服务了。
 
-## 配置NetWork和Cache
+## 配置Network和Cache
 `RequestQueue`在执行网络请求的时候主要以来两个东西：Network负责网络请求调用，Cache负责缓存处理。Network和Cache在Volley的toolbox中提供了两个标准实现：`DiskBasedCache`将每个响应作保存为一个文件，并在内存在提供索引。`BasicNetwork`基于优选的Http客户端负责请求用。
 
 `BasicNetWork`是Volley的`NewWork`的默认实现。`BasicNetwork`初始的时候需要一个Http Client，通常是`HttpURLConnection`，通过这个Client真正连接网络。

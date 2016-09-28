@@ -1,7 +1,7 @@
 ---
 title: Volley官方教程翻译（五）：自定义Request
 date: 2016-09-28 10:27:51
-tags: android volley
+tags: [android, volley]
 ---
 > 原文连接：https://developer.android.com/training/volley/request-custom.html
 

@@ -1,7 +1,7 @@
 ---
 title: Volley官方教程翻译（二）：执行一个简单的请求
 date: 2016-09-27 22:24:51
-tags: android volley
+tags: [android, volley]
 ---
 > 原文连接：https://developer.android.com/training/volley/index.html
 

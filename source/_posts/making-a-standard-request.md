@@ -1,7 +1,7 @@
 ---
 title: Volley官方教程翻译（四）：使用标准请求
 date: 2016-09-28 10:23:44
-tags: android volley
+tags: [android, volley]
 ---
 > 原文连接：https://developer.android.com/training/volley/request.html
 
@@ -161,3 +161,36 @@ ImageLoader mImageLoader = new ImageLoader(mRequestQueue, new LruBitmapCache(
 ```
 
 # 请求JSON数据
+
+Volley提供了如下两个类来完成Json请求：
+- JsonArrayRequest 一个获取指定URL的响应为Json数组的请求
+- JsonObjectRequest 一个获取指定URL的响应为Json对象的请求，请求体可以包含一个Json对象。
+
+以上两个类都基于JsonRequest类。它们的使用方法与其他类型的Request一样。如下的代码片段展示了如何获取Json数据以及将它们作为文本显示在UI上：
+
+``` java
+TextView mTxtDisplay;
+ImageView mImageView;
+mTxtDisplay = (TextView) findViewById(R.id.txtDisplay);
+String url = "http://my-json-feed";
+
+JsonObjectRequest jsObjRequest = new JsonObjectRequest
+        (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+    @Override
+    public void onResponse(JSONObject response) {
+        mTxtDisplay.setText("Response: " + response.toString());
+    }
+}, new Response.ErrorListener() {
+
+    @Override
+    public void onErrorResponse(VolleyError error) {
+        // TODO Auto-generated method stub
+
+    }
+});
+
+// Access the RequestQueue through your singleton class.
+MySingleton.getInstance(this).addToRequestQueue(jsObjRequest);
+```
+下一节[自定义Request](/2016/09/28/implementing-a-custom-request)，将会介绍如何基于Gson自定义一个Json请求。

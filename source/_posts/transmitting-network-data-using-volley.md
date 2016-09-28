@@ -1,7 +1,7 @@
 ---
 title: Volley官方教程翻译（一）：使用Volley来完成网络数据请求
 date: 2016-09-27 22:20:50
-tags: android volley
+tags: [android, volley]
 ---
 
 > 原文连接：https://developer.android.com/training/volley/index.html
