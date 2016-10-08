@@ -79,11 +79,11 @@ private boolean enqueueMessage(MessageQueue queue, Message msg, long uptimeMilli
 }
 ```
 至此，消息发送完成，就是这么简单。
-需要注意的一点是在将Message添加到MessageQueue之间，Handler将自己的引用交给了Message<code>msg.target = this</code>，这是为了下面执行消息的时候使用。
+需要注意的一点是在将Message添加到MessageQueue之间，Handler将自己的引用交给了Message`msg.target = this`，这是为了下面执行消息的时候使用。
 
 ## 执行消息
 消息的执行的第一步就是从消息队列里将消息取出，这件事起是在上面的Looper.loop()中执行的。
-看上面代码，消息取出来之后调用了这一句，<code>msg.target.dispatchMessage(msg)</code>，细看一下dispatchMessage这个方法也特别简单。
+看上面代码，消息取出来之后调用了这一句，`msg.target.dispatchMessage(msg)`，细看一下dispatchMessage这个方法也特别简单。
 ``` java
 public void dispatchMessage(Message msg) {
     if (msg.callback != null) { // callback不为空，说明是runable消息，通过handleCallback方法执行
