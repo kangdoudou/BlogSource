@@ -52,7 +52,7 @@ Volley内部维护者一个缓存处理线程和一组网络调度线程。当�
 
 值得注意的一点是，重量级的操作，比如阻塞I/O、响应解码处理都是在工作线程上执行的。你可以在任意线程上添加`Request`，但响应总会被转送到主线程。
 
-![Request的一生](/2016/09/20/volley-official-tutorials/volley-request.png "Request的一生")
+![Request的一生](/2016/09/27/sending-a-simple-request/volley-request.png "Request的一生")
 
 ## 取消请求
 通过调用`Request`对象的`cancel()`方法，可以取消这一个`Request`。一旦一个`Request`被取消，那么它的响应监听将永远不会被调用。这就意味着，你可以在`Activity`的`onStop()`方法中取消所有还没有执行完的`Request`。这样的话，我们就不需要在`Request`的响应回调中判断是否`getActivity() == null`或者`onSaveInstanceState()`有没有已经被调用这些预防性的判断了，因为被取消后根本就不存在这种case了。
