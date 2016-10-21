@@ -1,5 +1,5 @@
 ---
-title: Choreographer - 01 - 垂直同步
+title: Choreographer - 03 - 请求执行回调
 date: 2016-10-12 15:38:57
 tags: android
 ---
@@ -62,4 +62,4 @@ public void onVsync(long timestampNanos, int builtInDisplayId, int frame) {
 
 需要注意的是第1步和第2步并不是连续的，收到V-Sync请求之后需要等到下一次V-Sync开始的时间才去回调dispatchVsync方法，而且在同一个V-Sync时间内无论请求几次V-Sync，都只会在下一次V-Sync开始的时候收到一次dispatchVsync回调。
 
-![v-sync](/2016/10/12/choreographer-01-vsync/v-sync.jpg)
+![v-sync](/2016/10/12/choreographer-03-request-exec-callback/v-sync.jpg)
