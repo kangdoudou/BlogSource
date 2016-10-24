@@ -14,9 +14,6 @@ tags: android
 
 上述问题都可以在Choreographer中找到答案。
 
-# 的
-Choreographer的英文翻译是`编舞者`，
-
 # 工作流程
 Choreographer的工作流程大概可以分为以下三步：
 
@@ -24,4 +21,51 @@ Choreographer的工作流程大概可以分为以下三步：
 2. 安排回调定时执行
 3. 回调执行
 
-下面将详细介绍一下这三步。
+之后将详细介绍一下这三步。
+
+# 基于Looper线程
+
+``` java
+private static final ThreadLocal<Choreographer> sThreadInstance =
+        new ThreadLocal<Choreographer>() {
+    @Override
+    protected Choreographer initialValue() {
+        Looper looper = Looper.myLooper();
+        if (looper == null) {
+            throw new IllegalStateException("The current thread must have a looper!");
+        }
+        return new Choreographer(looper);
+    }
+};
+```
+
+Choreography只能存在在Looper线程中，而且每个线程只有一个Choreography对象。
+
+# 回调与回调队列
+Choreography可以接收Runnable和FrameCallback两种类型的回调，并将回调封装成CallbackRecord对象像保存在CallbackQueue中。
+
+CallbackRecord与CallbackQueue的实际与实现与Android消息机制的Message与MessageQueue非常类似。
+
+``` java
+private static final class CallbackRecord {
+    public CallbackRecord next;
+    public long dueTime;
+    public Object action; // Runnable or FrameCallback
+    public Object token;
+
+    public void run(long frameTimeNanos) {
+        if (token == FRAME_CALLBACK_TOKEN) {
+            ((FrameCallback)action).doFrame(frameTimeNanos);
+        } else {
+            ((Runnable)action).run();
+        }
+    }
+}
+```
+
+CallbackRecord以链表结构按照执行时间有序保存在CallbackQueue中，CallbackQueue持有链表头的引用，负责CallbackRecord的添加与提取。
+
+## 三种回调
+Android一共有三种类型的回调分别是：CALLBACK_INPUT、CALLBACK_ANIMATION、CALLBACK_TRAVERSAL，分别对应输入、动画、遍历相关的回调。Choreography为每种类型的回调都实例化了一个CallbackQueue来保存特定类型的回调。
+
+在每一帧执行的时候严格按照CALLBACK_INPUT、CALLBACK_ANIMATION、CALLBACK_TRAVERSAL的顺序来执行回调。

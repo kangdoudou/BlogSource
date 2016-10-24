@@ -3,21 +3,13 @@ title: Choreographer - 03 - 请求执行回调
 date: 2016-10-12 15:38:57
 tags: android
 ---
-
-我们都知道invalidate、requestLayout、requestFocus这些方法可以是View重新布局、绘制，但当我们去看源码的时候，发现这些方法就是设置了些标志位，这些方法是如何触发我们熟悉的View的绘制流程的呢？
-
-在使用属性动画我们最多就是配置一个与布局或者绘制有关的属性的插值器，设置一下持续时间就可以来执行动画了，那么动画又是由谁驱动起来的呢？
-
-我们知道我们手机画面的刷新频率是60HZ，那么这个频率是谁控制的？
-
-在日常开发中如，如果在主线程做了写稍微耗时的操作，就会看到log输出："Skipped xxx frames! The application may be doing too much work on its main thread."，这些跳帧情况是怎么发生的呢？
-
-上述问题都可以在Choreographer中找到答案。
+既然手机有固定的频率，那么屏幕内容的刷新肯定不是跟随我们随意调用invalidate、requestLayout、requestFocus这些方法走的。
+Choreographer内的scheduleFrameLocked方法是用来请求一次回调执行，其内部有两种实现：使用垂直同步，不用垂直同步
 
 # 垂直同步
-既然手机有固定的频率，那么屏幕内容的刷新肯定不是跟随我们随意调用invalidate、requestLayout、requestFocus这些方法走的。屏幕的刷新有其一定的同步机制。这里使用的是Vertical Sync - 垂直同步（下记V-Sync）
+屏幕的刷新有其一定的同步机制。这里使用的是Vertical Sync - 垂直同步（下记V-Sync）
 
-V-Sync是加在两帧之间。它指示着前一帧的结束，和新一帧的开始。这也就意味着没秒内最多有60个V-Sync，每一次V-Sync到来的时候，如果需要重新绘制，就执行绘制流程刷新屏幕。
+V-Sync是加在两帧之间。它指示着前一帧的结束，和新一帧的开始。这也就意味着每秒内最多有60个V-Sync，每一次V-Sync到来的时候，如果需要重新绘制，就执行绘制流程刷新屏幕。
 
 V-Sync由底层SurfaceFlinger产生，但其不自主均匀的每秒钟产生60个，是在需要刷新的时候去请求SurfaceFlinger产生V-Sync。负责与SurfaceFlinger交互的是DisplayEventReceiver，其中涉及的主要方法是：
 
