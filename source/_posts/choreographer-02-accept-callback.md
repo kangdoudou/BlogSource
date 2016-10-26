@@ -51,7 +51,6 @@ void scheduleTraversals() {
 }
 ```
 
-
 # 添加回调的方法postCallback 与 postFrameCallback
 
 ## Choreographer.postCallback
