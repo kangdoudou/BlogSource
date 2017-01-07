@@ -3,6 +3,9 @@ title: EventBus官方教程翻译（一）：三步开启EventBus
 date: 2016-12-13 20:18:23
 tags: [android, eventbus]
 ---
+
+> [原文连接]()
+
 EventBus的api特别简单，只需要三步。
 
 在开始之前，请确认你的项目已经添加了EventBus库依赖。
